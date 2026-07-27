@@ -16,7 +16,7 @@
             nativeBuildInputs = with pkgs; [
               imagemagick
               nodejs
-              python3
+              python3 
               pkg-config
               git
               rsync
