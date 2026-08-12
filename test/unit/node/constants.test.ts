@@ -96,6 +96,34 @@ describe("constants", () => {
     })
   })
 
+  describe("with version override", () => {
+    const originalVersion = process.env.VERSION
+
+    beforeEach(() => {
+      process.env.VERSION = "9.9.9"
+      jest.resetModules()
+    })
+
+    afterEach(() => {
+      if (originalVersion === undefined) {
+        delete process.env.VERSION
+      } else {
+        process.env.VERSION = originalVersion
+      }
+      jest.resetModules()
+    })
+
+    it("should prefer the environment version when package.json is unset", () => {
+      jest.doMock(path.resolve(__dirname, "../../../package.json"), () => ({ version: "0.0.0" }), { virtual: true })
+      jest.doMock(path.resolve(__dirname, "../../../lib/vscode/package.json"), () => ({ version: "1.2.3" }), {
+        virtual: true,
+      })
+
+      const constants = require("../../../src/node/constants")
+      expect(constants.version).toBe("9.9.9")
+    })
+  })
+
   describe("with incomplete package.json", () => {
     const mockPackageJson = {
       name: "mock-code-server",
