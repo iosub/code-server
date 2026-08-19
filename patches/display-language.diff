@@ -9,16 +9,16 @@ Index: code-server/lib/vscode/src/vs/server/node/serverServices.ts
 ===================================================================
 --- code-server.orig/lib/vscode/src/vs/server/node/serverServices.ts
 +++ code-server/lib/vscode/src/vs/server/node/serverServices.ts
-@@ -12,7 +12,7 @@ import * as path from '../../base/common
- import { IURITransformer } from '../../base/common/uriIpc.js';
+@@ -14,7 +14,7 @@ import { IURITransformer } from '../../b
+ import { generateUuid } from '../../base/common/uuid.js';
  import { getMachineId, getSqmMachineId, getDevDeviceId } from '../../base/node/id.js';
  import { Promises } from '../../base/node/pfs.js';
 -import { ClientConnectionEvent, IMessagePassingProtocol, IPCServer, StaticRouter } from '../../base/parts/ipc/common/ipc.js';
 +import { ClientConnectionEvent, IMessagePassingProtocol, IPCServer, ProxyChannel, StaticRouter } from '../../base/parts/ipc/common/ipc.js';
  import { ProtocolConstants } from '../../base/parts/ipc/common/ipc.net.js';
+ import { createRandomIPCHandle } from '../../base/parts/ipc/node/ipc.net.js';
  import { IConfigurationService } from '../../platform/configuration/common/configuration.js';
- import { ConfigurationService } from '../../platform/configuration/common/configurationService.js';
-@@ -358,6 +358,9 @@ export async function setupServerService
+@@ -418,6 +418,9 @@ export async function setupServerService
  
  		socketServer.registerChannel('mcpManagement', new McpManagementChannel(mcpManagementService, (ctx: RemoteAgentConnectionContext) => getUriTransformer(ctx.remoteAuthority)));
  
@@ -153,7 +153,7 @@ Index: code-server/lib/vscode/src/vs/server/node/webClientServer.ts
 ===================================================================
 --- code-server.orig/lib/vscode/src/vs/server/node/webClientServer.ts
 +++ code-server/lib/vscode/src/vs/server/node/webClientServer.ts
-@@ -25,6 +25,7 @@ import { URI } from '../../base/common/u
+@@ -24,6 +24,7 @@ import { URI } from '../../base/common/u
  import { streamToBuffer } from '../../base/common/buffer.js';
  import { IProductConfiguration } from '../../base/common/product.js';
  import { isString, Mutable } from '../../base/common/types.js';
@@ -161,7 +161,7 @@ Index: code-server/lib/vscode/src/vs/server/node/webClientServer.ts
  import { CharCode } from '../../base/common/charCode.js';
  import { IExtensionManifest } from '../../platform/extensions/common/extensions.js';
  import { ICSSDevelopmentService } from '../../platform/cssDev/node/cssDevService.js';
-@@ -401,14 +402,22 @@ export class WebClientServer {
+@@ -398,14 +399,22 @@ export class WebClientServer {
  		};
  
  		const cookies = cookie.parse(req.headers.cookie || '');
