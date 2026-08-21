@@ -21,7 +21,8 @@ jobs:
     outputs:
       ci: ${{ steps.filter.outputs.ci }}
       code: ${{ steps.filter.outputs.code }}
-      deps: ${{ steps.filter.outputs.deps }}
+      npm: ${{ steps.filter.outputs.npm }}
+      vscode: ${{ steps.filter.outputs.vscode }}
       docs: ${{ steps.filter.outputs.docs }}
       helm: ${{ steps.filter.outputs.helm }}
     steps:
@@ -42,11 +43,12 @@ jobs:
             code:
               - "src/**"
               - "test/**"
-            deps:
-              - "lib/**"
-              - "patches/**"
+            npm:
               - "package-lock.json"
               - "test/package-lock.json"
+            vscode:
+              - "lib/**"
+              - "patches/**"
       - id: debug
         run: |
           echo "${{ toJSON(steps.filter )}}"
@@ -56,7 +58,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version-file: .node-version
           cache: npm
@@ -73,7 +75,7 @@ jobs:
     if: needs.changes.outputs.docs == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version-file: .node-version
           cache: npm
@@ -90,12 +92,10 @@ jobs:
     if: needs.changes.outputs.helm == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+      - uses: bmuschko/setup-kubeconform@e5d264ec1eafe2314e750c429a9da7639dd5a003 # v1.1.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: "v3.19.2"
-      - run: helm plugin install https://github.com/instrumenta/helm-kubeval
-      - run: helm kubeval ci/helm-chart
+          kubeconform-version: "0.8.0"
+      - run: kubeconform ci/helm-chart
 
   lint-ts:
     name: Lint TypeScript files
@@ -104,7 +104,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version-file: .node-version
           cache: npm
@@ -132,10 +132,10 @@ jobs:
     name: Run unit tests
     runs-on: ubuntu-22.04
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.npm == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version-file: .node-version
           cache: npm
@@ -172,7 +172,7 @@ jobs:
         with:
           submodules: true
       - run: quilt push -a
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version-file: .node-version
           cache: npm
@@ -216,11 +216,11 @@ jobs:
     env:
       LOG_LEVEL: debug
     needs: [changes, build]
-    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.ci == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.npm == 'true' || needs.changes.outputs.vscode == 'true' || needs.changes.outputs.ci == 'true'
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version-file: .node-version
           cache: npm
@@ -252,7 +252,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       LOG_LEVEL: debug
     needs: [changes, build]
-    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.deps == 'true' || needs.changes.outputs.ci == 'true'
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.npm == 'true' || needs.changes.outputs.vscode == 'true' || needs.changes.outputs.ci == 'true'
 
     steps:
       - name: Cache Caddy
@@ -270,7 +270,7 @@ jobs:
           tar -xzf caddy_2.5.2_linux_amd64.tar.gz --directory ~/.cache/caddy
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
           node-version-file: .node-version
           cache: npm
